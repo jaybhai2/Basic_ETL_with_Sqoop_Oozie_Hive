@@ -8,6 +8,7 @@ In the folder above, you will see sqoop_metastore.txt. This files contains the i
 # 2.2.2 Data Loading Module
 create_src_table.sql
 create_partitioned_table.sql
+
 After data being loading into HDFS, Hive tables are created and used to represent the imported data in an RDBMS manner. In addition, partitioned tables are created for query efficiency. These parts are done by two hive script, ‘create_src_table.sql’ which create source table for the data, and ‘create_partitioned_table.sql’ which create partitioned table inserted from the source tables. These two sql script can also be found in above folder and shall be uploaded to HDFS when running workflow.
 
 # 2.2.4 Process Optimization Module
@@ -16,6 +17,7 @@ cdw_workflow2.xm
 coordinator2.xml
 job.propertie
 password.txt
+
 To run the workflow, open the job.properties file and edit the frequency, start and ending date of the workflow as described in previous section. To run the workflow, perform following actions;
 
 Using Ambari UI, create a new folder in hdfs /user/maria_dev and name it as /cdw_ooziejob
