@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow-app xmlns="uri:oozie:workflow:0.2" name="ETL_CDW">
+	
+	<start to="extract-branch-table"/>    
+	<action name="extract-branch-table"> 
+		<sqoop xmlns = "uri:oozie:sqoop-action:0.2">
+			<job-tracker>${jobTracker}</job-tracker>  <!--job tracking node is http://sandbox.hortonworks.com:8050 which is define in job properties--> 
+			<name-node>${nameNode}</name-node> <!--name node is http://sandbox.hortonworks.com:8020 which is defined in job properties--> 
+
+		
+			<configuration>
+				<property>
+					<name>mapred.job.queue.name</name>
+					<value>${queueName}</value>
+				</property>
+			</configuration>
+
+			<arg>job</arg>                                   <!-- update src table -->
+			<arg>--meta-connect</arg>
+			<arg>jdbc:hsqldb:hsql://localhost:16000/sqoop</arg>
+			<arg>--exec</arg>
+			<arg>updateBranch</arg>                 
+
+		<archive>/user/maria_dev/cdw_ooziejob/lib/java-json.jar#java-json.jar</archive>
+
+
+		</sqoop>
+		<ok to="extract-creditcard-table"/>             <!-- jump to extract-creditcard-table -->
+		<error to="fail"/>          <!-- jump to tag kill -->
+	</action>    					 <!-- end of action extract-branch-table -->
+
+
+	<action name="extract-creditcard-table"> 
+		<sqoop xmlns = "uri:oozie:sqoop-action:0.2">
+			<job-tracker>${jobTracker}</job-tracker>  <!--job tracking node is http://sandbox.hortonworks.com:8050 which is define in job properties--> 
+			<name-node>${nameNode}</name-node> <!--name node is http://sandbox.hortonworks.com:8020 which is defined in job properties--> 
+		
+			
+			<configuration>
+				<property>
+					<name>mapred.job.queue.name</name>
+					<value>${queueName}</value>
+				</property>
+			</configuration>
+
+
+			<arg>job</arg>                                   <!-- update src table -->
+			<arg>--meta-connect</arg>
+			<arg>jdbc:hsqldb:hsql://localhost:16000/sqoop</arg>
+			<arg>--exec</arg>
+			<arg>updateTransaction</arg>  
+
+		<archive>/user/maria_dev/cdw_ooziejob/lib/java-json.jar#java-json.jar</archive>
+		</sqoop>
+		<ok to="extract-customer-table"/>             <!-- jump to extract-creditcard-table -->
+		<error to="fail"/>          <!-- jump to tag kill -->
+	</action> 
+
+
+	<action name="extract-customer-table"> 
+		<sqoop xmlns = "uri:oozie:sqoop-action:0.2">
+			<job-tracker>${jobTracker}</job-tracker>  <!--job tracking node is http://sandbox.hortonworks.com:8050 which is define in job properties--> 
+			<name-node>${nameNode}</name-node> <!--name node is http://sandbox.hortonworks.com:8020 which is defined in job properties--> 
+			
+			<configuration>
+				<property>
+					<name>mapred.job.queue.name</name>
+					<value>${queueName}</value>
+				</property>
+			</configuration>
+
+			<arg>job</arg>                                   <!-- update src table -->
+			<arg>--meta-connect</arg>
+			<arg>jdbc:hsqldb:hsql://localhost:16000/sqoop</arg>
+			<arg>--exec</arg>
+			<arg>updateCustomer</arg>  
+
+		<archive>/user/maria_dev/cdw_ooziejob/lib/java-json.jar#java-json.jar</archive>
+		</sqoop>
+		<ok to="extract-timeid-table"/>             <!-- jump to extract-creditcard-table -->
+		<error to="fail"/>          <!-- jump to tag kill -->
+	</action>   
+
+
+	<action name="extract-timeid-table"> 
+		<sqoop xmlns = "uri:oozie:sqoop-action:0.2">
+			<job-tracker>${jobTracker}</job-tracker>  <!--job tracking node is http://sandbox.hortonworks.com:8050 which is define in job properties--> 
+			<name-node>${nameNode}</name-node> <!--name node is http://sandbox.hortonworks.com:8020 which is defined in job properties--> 
+			
+			
+			<configuration>
+				<property>
+					<name>mapred.job.queue.name</name>
+					<value>${queueName}</value>
+				</property>
+			</configuration>
+
+
+			<arg>job</arg>                                   <!-- update src table -->
+			<arg>--meta-connect</arg>
+			<arg>jdbc:hsqldb:hsql://localhost:16000/sqoop</arg>
+			<arg>--exec</arg>
+			<arg>updateTimeid</arg>  
+
+		<archive>/user/maria_dev/cdw_ooziejob/lib/java-json.jar#java-json.jar</archive>
+		</sqoop>
+		<ok to="update-src-hive-tables"/>             <!-- jump to tag end -->
+		<error to="fail"/>          <!-- jump to tag kill -->
+	</action>     <!-- end of action extract-branch-table -->
+
+
+<action name="update-src-hive-tables">
+        <hive xmlns="uri:oozie:hive-action:0.2">
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            
+            <configuration>
+                <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>${queueName}</value>
+                </property>
+            </configuration>
+            <script>create_src_tables.sql</script>
+            <param>src_OUTPUT=${src_tables_path}</param>  <!-- this output varibale is define inside the oldmovies.sql file --> 
+        </hive>
+
+		<ok to="overwrite-partitioned-hive-tables"/>             
+		<error to="fail"/>          
+	</action>    
+
+
+
+<action name="overwrite-partitioned-hive-tables">
+        <hive xmlns="uri:oozie:hive-action:0.2">
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            
+            <configuration>
+                <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>${queueName}</value>
+                </property>
+            </configuration>
+            <script>create_partitioned_tables.sql</script>
+            <param>OUTPUT=${partitioned_tables_path}</param>  <!-- this output varibale is define inside the oldmovies.sql file --> 
+        </hive>
+
+		<ok to="end"/>             <!-- jump to tag end -->
+		<error to="fail"/>          <!-- jump to tag kill -->
+	</action>     <!-- end of action extract-branch-table -->
+
+
+
+	<kill name="fail">
+		<message>Sqoop failed</message>
+	</kill>
+	<end name="end"/>
+</workflow-app>             <!-- end of work flow -->

@@ -1,0 +1,21 @@
+
+**************   import branch table  *******************
+
+sqoop import --connect jdbc:mysql://localhost/CDW_SAPP --driver com.mysql.jdbc.Driver --username root --password password --query 'SELECT BRANCH_CODE, BRANCH_NAME,BRANCH_STREET, BRANCH_CITY, BRANCH_STATE, CASE WHEN BRANCH_ZIP IS NULL THEN 999999 ELSE BRANCH_ZIP END, CONCAT("(",SUBSTR(BRANCH_PHONE,1,3),")",SUBST(BRANCH_PHONE,3,3),"-",SUBSTR(BRANCH_PHONE,6,4)), LAST_UPDATED FROM CDW_SAPP_BRANCH WHERE $CONDITIONS' --target-dir ./src_credit_card_system/src_cdw_sapp_d_branch --delete target-dir --mysql-delimiters -m1
+
+
+
+
+**************import credit card table*******************
+
+sqoop import --connect jdbc:mysql://localhost/CDW_SAPP --driver com.mysql.jdbc.Driver --username root --password password --query "SELECT CREDIT_CARD_NO,Date_format(str_to_date(concat(year,'-',month,'-',day),'%Y-%m-%d') ,'%Y%m%d') AS TIMEID, CUST_SSN, BRANCH_CODE, TRANSACTION_TYPE,TRANSACTION_VALUE FROM CDW_SAPP_CREDITCARD WHERE \$CONDITIONS" --delete-target-dir --target-dir ./src_credit_card_system/src_cdw_sapp_f_credit_card --mysql-delimiters -m1;
+
+
+**************import customer table*******************
+
+sqoop import --connect jdbc:mysql://localhost/CDW_SAPP --driver com.mysql.jdbc.Driver --username root --password password --query "SELECT SSN, CONCAT(UCASE(LEFT(FIRST_NAME,1)), LCASE(SUBSTRING(FIRST_NAME,2))) FIRST_NAME, LCASE(MIDDLE_NAME) MN , CONCAT(UCASE(LEFT(LAST_NAME,1)), LCASE(SUBSTRING(LAST_NAME,2))) LAST_NAME, CREDIT_CARD_NO, CONCAT(APT_NO,' ',STREET_NAME) STREET, CUST_CITY, CUST_STATE, CUST_COUNTRY, CUST_ZIP,  CONCAT(LEFT(CUST_PHONE,3),'-',SUBSTRING(CUST_PHONE,4)) PHONE, CUST_EMAIL, LAST_UPDATED FROM CDW_SAPP_CUSTOMER WHERE \$CONDITIONS " --delete-target-dir --target-dir ./src_credit_card_system/cdw_sapp_d_customer --mysql-delimiters-m1;     
+
+
+**************import timeid table*******************
+
+sqoop import --connect jdbc:mysql://localhost/CDW_SAPP --driver com.mysql.jdbc.Driver --username root -password password --query "SELECT Date_format(str_to_date(concat(year,'-',month,'-',day), '%Y-%m-%d' ),'%Y%m%d ') AS TIMEID, DAY, MONTH,CASE WHEN MONTH BETWEEN 1 AND 3 THEN '1' WHEN MONTH BETWEEN 4 AND 6 THEN '2' WHEN MONTH BETWEEN 7 AND 9 THEN '3' WHEN MONTH BETWEEN 10 AND 12 THEN '4' END AS QUARTER, YEAR FROM CDW_SAPP_CREDITCARD WHERE \$CONDITIONS "--delete-target-dir --target-dir ./src_credit_card_system/cdw_sapp_d_time --mysql-delimiters-m1;      

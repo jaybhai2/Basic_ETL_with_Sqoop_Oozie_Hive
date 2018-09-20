@@ -1,0 +1,18 @@
+
+<coordinator-app xmlns = "uri:oozie:coordinator:0.2" 
+   name ="ETL work flow coordinator" frequency = "${frequency}" start = "${start}" end = "${end}" timezone = "America/New_York" >
+   
+   <controls>
+      <timeout>1</timeout>
+      <concurrency>1</concurrency>
+      <execution>FIFO</execution>
+      <throttle>1</throttle>
+   </controls>
+   
+   <action>
+      <workflow>
+         <app-path>${nameNode}/user/maria_dev/cdw_ooziejob/cdw_workflow2.xml</app-path>
+      </workflow>
+   </action>
+	
+</coordinator-app>
